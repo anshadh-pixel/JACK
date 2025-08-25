@@ -1,150 +1,134 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ml">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=AnjaliOldLipi&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'AnjaliOldLipi', sans-serif; background: linear-gradient(to right, #ffafbd, #ffc3a0); }
-        #chatContainer { display: none; }
-        .chat-message { margin: 8px 0; padding: 8px 12px; border-radius: 12px; position: relative; max-width: 75%; }
-        .user { background-color: #fce4ec; color: #880e4f; align-self: flex-end; }
-        .gf { background-color: #f3e5f5; color: #4a148c; align-self: flex-start; }
-        .fade-in { animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .heart { position: absolute; top: -12px; right: 8px; font-size: 18px; color: red; animation: heartbeat 1.5s infinite; }
-        @keyframes heartbeat { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
-        .calc-button { width: 48px; height: 48px; font-size: 16px; }
-        @media (max-width: 640px) {
-            .container { padding: 12px; max-width: 100%; }
-            .chat-message { max-width: 85%; font-size: 14px; }
-            #chatBox { max-height: 300px; }
-            #title, #calcTitle { font-size: 1.25rem; }
-            .calc-button { width: 40px; height: 40px; font-size: 14px; }
-            #calcDisplay { font-size: 1.5rem; }
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Secret Chat - Color Updated</title>
+  <style>
+    /* ====== CHANGE COLORS HERE ======
+       --bg-start / --bg-end : background gradient
+       --text-color         : main text color
+       --muted              : muted text (hints)
+       --card-bg            : chat box / card background
+       --btn-bg             : send button background
+       --btn-text           : send button text color
+    ==================================*/
+    :root{
+      --bg-start: #0f172a;     /* left/top background */
+      --bg-end:   #0b1220;     /* right/bottom background */
+      --text-color: #e6eef8;
+      --muted: #98a0b3;
+      --card-bg: rgba(255,255,255,0.04);
+      --btn-bg: #ef476f;
+      --btn-text: #ffffff;
+      --accent: #ffd166;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;padding:0;font-family:system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Malayalam', sans-serif}
+    body{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+      color:var(--text-color);
+      padding:18px;
+    }
+
+    .wrap{
+      width:100%;
+      max-width:520px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:14px;
+      padding:14px;
+      box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    h1{margin:6px 0 12px;font-size:1.25rem;text-align:center}
+    .hint{color:var(--muted);font-size:0.9rem;text-align:center;margin-bottom:12px}
+
+    #messages{
+      height:56vh;
+      max-height:520px;
+      overflow:auto;
+      background: var(--card-bg);
+      border-radius:10px;
+      padding:12px;
+      border:1px solid rgba(255,255,255,0.03);
+      margin-bottom:12px;
+      color:var(--text-color);
+    }
+    .msg{margin:8px 0;display:inline-block;max-width:85%;padding:8px 12px;border-radius:12px;line-height:1.25}
+    .msg.me{background: linear-gradient(90deg, rgba(239,71,111,0.12), rgba(239,71,111,0.06)); color:var(--text-color); align-self:flex-end; margin-left:auto}
+    .msg.you{background: linear-gradient(90deg, rgba(128,90,213,0.08), rgba(128,90,213,0.04)); color:var(--text-color)}
+    .time{display:block;font-size:11px;color:var(--muted);margin-top:6px}
+
+    .compose{display:flex;gap:8px;align-items:center}
+    .compose input{
+      flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);
+      background: rgba(0,0,0,0.25); color:var(--text-color); outline:none;
+    }
+    .compose button{
+      padding:10px 14px;border-radius:10px;border:0;background:var(--btn-bg);color:var(--btn-text);
+      cursor:pointer;font-weight:600;
+    }
+    .compose button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--accent)}
+
+    /* responsive */
+    @media (max-width:420px){
+      .wrap{padding:10px}
+      h1{font-size:1rem}
+      #messages{height:52vh}
+    }
+  </style>
 </head>
-<body class="min-h-screen flex items-center justify-center">
-    <div class="container mx-auto p-4 bg-white rounded-lg shadow-lg max-w-sm">
-        <!-- Calculator UI -->
-        <div id="calculatorContainer">
-            <h1 id="calcTitle" class="text-xl font-bold mb-3 text-center text-gray-700">Simple Calculator</h1>
-            <input type="text" id="calcDisplay" class="w-full p-2 border rounded mb-2 text-sm bg-gray-100" readonly value="0">
-            <div class="grid grid-cols-4 gap-1 mb-2">
-                <button onclick="clearCalc()" class="calc-button bg-red-500 text-white rounded hover:bg-red-600">C</button>
-                <button onclick="appendCalc('(')" class="calc-button bg-gray-300 rounded hover:bg-gray-400">(</button>
-                <button onclick="appendCalc(')')" class="calc-button bg-gray-300 rounded hover:bg-gray-400">)</button>
-                <button onclick="appendCalc('/')" class="calc-button bg-gray-300 rounded hover:bg-gray-400">/</button>
-                <button onclick="appendCalc('7')" class="calc-button bg-gray-200 rounded hover:bg-gray-300">7</button>
-                <button onclick="appendCalc('8')" class="calc-button bg-gray-200 rounded hover:bg-gray-300">8</button>
-                <button onclick="appendCalc('9')" class="calc-button bg-gray-200 rounded hover:bg-gray-300">9</button>
-                <button onclick="appendCalc('*')" class="calc-button bg-gray-300 rounded hover:bg-gray-400">*</button>
-                <button onclick="appendCalc('4')" class="calc-button bg-gray-200 rounded hover:bg-gray-300">4</button>
-                <button onclick="appendCalc('5')" class="calc-button bg-gray-200 rounded hover:bg-gray-300">5</button>
-                <button onclick="appendCalc('6')" class="calc-button bg-gray-200 rounded hover:bg-gray-300">6</button>
-                <button onclick="appendCalc('-')" class="calc-button bg-gray-300 rounded hover:bg-gray-400">-</button>
-                <button onclick="appendCalc('1')" class="calc-button bg-gray-200 rounded hover:bg-gray-300">1</button>
-                <button onclick="appendCalc('2')" class="calc-button bg-gray-200 rounded hover:bg-gray-300">2</button>
-                <button onclick="appendCalc('3')" class="calc-button bg-gray-200 rounded hover:bg-gray-300">3</button>
-                <button onclick="appendCalc('+')" class="calc-button bg-gray-300 rounded hover:bg-gray-400">+</button>
-                <button onclick="appendCalc('0')" class="calc-button bg-gray-200 rounded hover:bg-gray-300">0</button>
-                <button onclick="appendCalc('.')" class="calc-button bg-gray-200 rounded hover:bg-gray-300">.</button>
-                <button onclick="calculate()" class="calc-button col-span-2 bg-blue-500 text-white rounded hover:bg-blue-600">=</button>
-            </div>
-        </div>
+<body>
+  <div class="wrap">
+    <h1>💬 Secret Chat</h1>
+    <div class="hint">Color demo — customize top CSS variables to change colors</div>
 
-        <!-- Secret Chat UI -->
-        <div id="chatContainer" class="flex flex-col h-[450px]">
-            <h1 id="title" class="text-xl font-bold mb-3 text-center text-pink-600">Secret Chat 💕</h1>
-            <select id="language" class="mb-3 p-2 border rounded w-full text-sm" onchange="changeLanguage()">
-                <option value="en">English</option>
-                <option value="ml">മലയാളം</option>
-            </select>
-            <div id="chatBox" class="flex-1 overflow-y-auto mb-2 p-2 border rounded bg-pink-50"></div>
-            <textarea id="messageInput" class="w-full p-2 border rounded mb-2 text-sm" rows="2" placeholder="Type your message..."></textarea>
-            <div class="flex gap-2">
-                <button onclick="sendMessage('user')" class="flex-1 bg-pink-500 text-white p-2 rounded hover:bg-pink-600 transition text-sm">Send (You)</button>
-                <button onclick="sendMessage('gf')" class="flex-1 bg-purple-500 text-white p-2 rounded hover:bg-purple-600 transition text-sm">Send (GF)</button>
-                <button onclick="clearChat()" class="flex-1 bg-red-500 text-white p-2 rounded hover:bg-red-600 transition text-sm">Clear Chat</button>
-            </div>
-        </div>
+    <div id="messages" aria-live="polite"></div>
+
+    <div class="compose">
+      <input id="msgInput" placeholder="Type a message..." aria-label="message input">
+      <button id="sendBtn">Send</button>
+      <button id="altBtn" class="secondary">GF</button>
     </div>
-    <script>
-        const secretCode = "143"; // Change to your secret code
-        let messages = [{ text: "നിന്നെ കാണാൻ കൊതിയാകുന്നു! 😘", sender: "user" }]; // Pre-loaded romantic message
-        let calcExpression = "0";
+    <div style="margin-top:10px;color:var(--muted);font-size:12px;text-align:center">
+      Tip: Change <code>--bg-start</code>, <code>--bg-end</code>, <code>--text-color</code> in CSS.
+    </div>
+  </div>
 
-        function appendCalc(value) {
-            if (calcExpression === "0") calcExpression = "";
-            calcExpression += value;
-            document.getElementById('calcDisplay').value = calcExpression;
-        }
+  <script>
+    // simple demo-only local chat (no server) — two tabs will not sync.
+    // Replace with socket.io client if you have backend.
+    const messages = document.getElementById('messages');
+    const input = document.getElementById('msgInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const altBtn = document.getElementById('altBtn');
 
-        function clearCalc() {
-            calcExpression = "0";
-            document.getElementById('calcDisplay').value = calcExpression;
-        }
+    function addMessage(text, who='me'){
+      const d = document.createElement('div');
+      d.className = 'msg ' + (who === 'me' ? 'me' : 'you');
+      d.innerHTML = `<div>${escapeHtml(text)}</div><div class="time">${new Date().toLocaleTimeString()}</div>`;
+      messages.appendChild(d);
+      messages.scrollTop = messages.scrollHeight;
+    }
+    function escapeHtml(s){ return s.replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
 
-        function calculate() {
-            let input = document.getElementById('calcDisplay').value;
-            if (input === secretCode) {
-                document.getElementById('calculatorContainer').style.display = 'none';
-                document.getElementById('chatContainer').style.display = 'flex';
-                loadMessages();
-            } else {
-                try {
-                    calcExpression = eval(input).toString();
-                    document.getElementById('calcDisplay').value = calcExpression;
-                } catch {
-                    alert("Invalid calculation!");
-                    clearCalc();
-                }
-            }
-        }
+    sendBtn.addEventListener('click', ()=> {
+      const t = input.value.trim(); if(!t) return;
+      addMessage(t,'me'); input.value=''; setTimeout(()=> addMessage('Reply: '+t,'you'),600);
+    });
+    altBtn.addEventListener('click', ()=> {
+      const t = input.value.trim(); if(!t) return;
+      addMessage(t,'you'); input.value=''; setTimeout(()=> addMessage('Reply: '+t,'me'),600);
+    });
 
-        function sendMessage(sender) {
-            let input = document.getElementById('messageInput').value;
-            if (input.trim()) {
-                messages.push({ text: input, sender: sender });
-                document.getElementById('messageInput').value = '';
-                loadMessages();
-            }
-        }
-
-        function loadMessages() {
-            let chatBox = document.getElementById('chatBox');
-            chatBox.innerHTML = '';
-            messages.forEach(msg => {
-                let div = document.createElement('div');
-                div.className = `chat-message ${msg.sender} fade-in`;
-                div.innerHTML = `${msg.text} <span class="heart">❤️</span>`;
-                chatBox.appendChild(div);
-            });
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function clearChat() {
-            messages = [];
-            loadMessages();
-        }
-
-        function changeLanguage() {
-            let lang = document.getElementById('language').value;
-            document.getElementById('calcTitle').textContent = lang === 'ml' ? 'ലളിതമായ കാൽക്കുലേറ്റർ' : 'Simple Calculator';
-            document.getElementById('title').textContent = lang === 'ml' ? 'സീക്രട്ട് ചാറ്റ് 💕' : 'Secret Chat 💕';
-            document.getElementById('calcDisplay').placeholder = lang === 'ml' ? 'നമ്പർ നൽകുക...' : 'Enter number...';
-            document.getElementById('messageInput').placeholder = lang === 'ml' ? 'നിന്റെ മെസേജ് എഴുതുക...' : 'Type your message...';
-            document.getElementsByTagName('button')[0].textContent = lang === 'ml' ? 'സി' : 'C';
-            document.getElementsByTagName('button')[18].textContent = lang === 'ml' ? '=' : '=';
-            document.getElementsByTagName('button')[19].textContent = lang === 'ml' ? 'സെൻഡ് (നീ)' : 'Send (You)';
-            document.getElementsByTagName('button')[20].textContent = lang === 'ml' ? 'സെൻഡ് (GF)' : 'Send (GF)';
-            document.getElementsByTagName('button')[21].textContent = lang === 'ml' ? 'ചാറ്റ് ക്ലിയർ' : 'Clear Chat';
-        }
-
-        loadMessages();
-    </script>
+    // initial demo messages
+    addMessage('Hi 🙂 This is a color-customizable chat demo','you');
+    addMessage('Try changing CSS variables at the top to update colors','me');
+  </script>
 </body>
 </html>
